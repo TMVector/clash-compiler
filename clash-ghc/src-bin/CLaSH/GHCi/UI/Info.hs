@@ -346,7 +346,7 @@ processAllTypeCheckedModule tcm = do
     everythingAllSpans :: (r -> r -> r) -> r -> GenericQ r -> GenericQ r
     everythingAllSpans k z f x
       | (False `mkQ` (const True :: NameSet -> Bool)) x = z
-      | otherwise = foldl k (f x) (gmapQ (everythingAllSpans k z f) x)
+      | otherwise = foldl' k (f x) (gmapQ (everythingAllSpans k z f) x)
 
     cmpSpan (_,a,_) (_,b,_)
       | a `isSubspanOf` b = LT

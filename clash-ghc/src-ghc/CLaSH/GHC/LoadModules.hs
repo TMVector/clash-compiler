@@ -109,7 +109,7 @@ loadModules hdl modName dflagsM = do
                 Just df -> return df
                 Nothing -> do
                   df <- GHC.getSessionDynFlags
-                  let dfEn = foldl DynFlags.xopt_set df
+                  let dfEn = foldl' DynFlags.xopt_set df
                                 [ LangExt.TemplateHaskell
                                 , LangExt.TemplateHaskellQuotes
                                 , LangExt.DataKinds
@@ -126,7 +126,7 @@ loadModules hdl modName dflagsM = do
                                 , LangExt.MagicHash
                                 , LangExt.ExplicitForAll
                                 ]
-                  let dfDis = foldl DynFlags.xopt_unset dfEn
+                  let dfDis = foldl' DynFlags.xopt_unset dfEn
                                 [ LangExt.ImplicitPrelude
                                 , LangExt.MonomorphismRestriction
                                 , LangExt.Strict

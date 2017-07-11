@@ -151,11 +151,11 @@ contextEnv = go HML.empty HML.empty
     go gamma delta []                   = (gamma,delta)
     go gamma delta (LetBinding _ ids:ctx) = go gamma' delta ctx
       where
-        gamma' = foldl addToGamma gamma ids
+        gamma' = List.foldl' addToGamma gamma ids
 
     go gamma delta (LetBody ids:ctx)    = go gamma' delta ctx
       where
-        gamma' = foldl addToGamma gamma ids
+        gamma' = List.foldl' addToGamma gamma ids
 
     go gamma delta (LamBody lId:ctx)    = go gamma' delta ctx
       where
@@ -167,7 +167,7 @@ contextEnv = go HML.empty HML.empty
 
     go gamma delta (CaseAlt ids:ctx)    = go gamma' delta ctx
       where
-        gamma' = foldl addToGamma gamma ids
+        gamma' = List.foldl' addToGamma gamma ids
 
     go gamma delta (_:ctx) = go gamma delta ctx
 

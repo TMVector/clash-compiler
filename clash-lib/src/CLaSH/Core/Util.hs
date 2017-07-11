@@ -17,6 +17,7 @@ import qualified Data.HashMap.Strict           as HMS
 import qualified Data.HashMap.Lazy             as HashMap
 import Data.HashMap.Lazy                       (HashMap)
 import qualified Data.HashSet                  as HashSet
+import Data.List                               (foldl')
 import Data.Maybe                              (fromJust, mapMaybe)
 import Unbound.Generics.LocallyNameless        (Fresh, bind, embed, rebind,
                                                 string2Name, unbind, unembed,
@@ -150,19 +151,19 @@ mkLams tm = mkAbstraction tm . map Left
 mkApps :: Term
        -> [Either Term Type]
        -> Term
-mkApps = foldl (\e a -> either (App e) (TyApp e) a)
+mkApps = foldl' (\e a -> either (App e) (TyApp e) a)
 
 -- | Apply a list of terms to a term
 mkTmApps :: Term
          -> [Term]
          -> Term
-mkTmApps = foldl App
+mkTmApps = foldl' App
 
 -- | Apply a list of types to a term
 mkTyApps :: Term
          -> [Type]
          -> Term
-mkTyApps = foldl TyApp
+mkTyApps = foldl' TyApp
 
 -- | Does a term have a function type?
 isFun :: Fresh m

@@ -174,7 +174,7 @@ defaultMain = flip withArgs $ do
             GHC.runGhc (Just libDir) $ do
 
             dflags <- GHC.getSessionDynFlags
-            let dflagsExtra = foldl DynFlags.xopt_set
+            let dflagsExtra = foldl' DynFlags.xopt_set
                                     dflags
                                     [ LangExt.TemplateHaskell
                                     , LangExt.TemplateHaskellQuotes
@@ -192,7 +192,7 @@ defaultMain = flip withArgs $ do
                                     , LangExt.MagicHash
                                     , LangExt.ExplicitForAll
                                     ]
-                dflagsExtra1 = foldl DynFlags.xopt_unset dflagsExtra
+                dflagsExtra1 = foldl' DynFlags.xopt_unset dflagsExtra
                                      [ LangExt.ImplicitPrelude
                                      , LangExt.MonomorphismRestriction
                                      ]
@@ -265,10 +265,10 @@ main' postLoadMode dflags0 args flagWarnings clashOpts = do
                 HscInterpreted | not (gopt Opt_ExternalInterpreter dflags3) ->
                     let platform = targetPlatform dflags3
                         dflags3a = updateWays $ dflags3 { ways = interpWays }
-                        dflags3b = foldl gopt_set dflags3a
+                        dflags3b = foldl' gopt_set dflags3a
                                  $ concatMap (wayGeneralFlags platform)
                                              interpWays
-                        dflags3c = foldl gopt_unset dflags3b
+                        dflags3c = foldl' gopt_unset dflags3b
                                  $ concatMap (wayUnsetGeneralFlags platform)
                                              interpWays
                     in dflags3c

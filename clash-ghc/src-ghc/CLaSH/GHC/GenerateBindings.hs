@@ -16,6 +16,7 @@ import           Data.HashMap.Strict     (HashMap)
 import qualified Data.HashMap.Strict     as HashMap
 import           Data.IntMap.Strict      (IntMap)
 import qualified Data.IntMap.Strict      as IM
+import           Data.List               (foldl')
 import           Data.Text.Lazy          (Text)
 import qualified Data.Set                as Set
 import qualified Data.Set.Lens           as Lens
@@ -112,7 +113,7 @@ retype tcm (visited,bindings) current = (visited', HashMap.insert current (ty',s
   where
     (_,sp,tm)            = bindings HashMap.! current
     used                 = Set.toList $ Lens.setOf termFreeIds tm
-    (visited',bindings') = foldl (retype tcm) (current:visited,bindings) (filter (`notElem` visited) used)
+    (visited',bindings') = foldl' (retype tcm) (current:visited,bindings) (filter (`notElem` visited) used)
     usedTys              = map ((^. _1) . (bindings' HashMap.!)) used
     usedVars             = zipWith Var usedTys used
     tm'                  = substTms (zip used usedVars) tm

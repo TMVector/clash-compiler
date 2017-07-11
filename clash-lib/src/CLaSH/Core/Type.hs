@@ -51,6 +51,7 @@ where
 import           Control.DeepSeq                         as DS
 import           Data.HashMap.Strict                     (HashMap)
 import qualified Data.HashMap.Strict                     as HashMap
+import           Data.List                               (foldl')
 import           Data.Maybe                              (isJust, mapMaybe)
 import           GHC.Base                                (isTrue#,(==#))
 import           GHC.Generics                            (Generic(..))
@@ -170,7 +171,7 @@ coreView tcMap ty = case tyView ty of
 -- | Instantiate and Apply the RHS/Original of a NewType with the given
 -- list of argument types
 newTyConInstRhs :: ([TyName],Type) -> [Type] -> Type
-newTyConInstRhs (tvs,ty) tys = foldl AppTy (substTys (zip tvs tys1) ty) tys2
+newTyConInstRhs (tvs,ty) tys = foldl' AppTy (substTys (zip tvs tys1) ty) tys2
   where
     (tys1, tys2) = splitAtList tvs tys
 
@@ -180,7 +181,7 @@ mkFunTy t1 = AppTy (AppTy (ConstTy Arrow) t1)
 
 -- | Make a TyCon Application out of a TyCon and a list of argument types
 mkTyConApp :: TyConName -> [Type] -> Type
-mkTyConApp tc = foldl AppTy (ConstTy $ TyCon tc)
+mkTyConApp tc = foldl' AppTy (ConstTy $ TyCon tc)
 
 -- | Make a Type out of a TyCon
 mkTyConTy :: TyConName -> Type
@@ -209,7 +210,7 @@ typeKind m (tyView -> FunTy _arg res)
   | otherwise       = liftedTypeKind
   where k = typeKind m res
 
-typeKind m (tyView -> TyConApp tc args) = foldl kindFunResult (tyConKind (m HashMap.! tc)) args
+typeKind m (tyView -> TyConApp tc args) = foldl' kindFunResult (tyConKind (m HashMap.! tc)) args
 
 typeKind m (AppTy fun arg)      = kindFunResult (typeKind m fun) arg
 typeKind _ (ConstTy ct)         = error $ $(curLoc) ++ "typeKind: naked ConstTy: " ++ show ct
@@ -339,7 +340,7 @@ findFunSubst tcm (tcSubst:rest) args = case funSubsts tcm tcSubst args of
 -- a substituted RHS
 funSubsts :: HashMap TyConName TyCon -> ([Type],Type) -> [Type] -> Maybe Type
 funSubsts tcm (tcSubstLhs,tcSubstRhs) args = do
-  tySubts <- foldl (funSubst tcm) (Just []) (zip tcSubstLhs args)
+  tySubts <- foldl' (funSubst tcm) (Just []) (zip tcSubstLhs args)
   let tyRhs = substTys tySubts tcSubstRhs
   return tyRhs
 
@@ -371,7 +372,7 @@ funSubst tcm (Just s) = uncurry go
     go ty1@(LitTy _) ty2 = if ty1 == ty2 then Just s else Nothing
     go (tyView -> TyConApp tc argTys) (tyView -> TyConApp tc' argTys')
       | tc == tc'
-      = foldl (funSubst tcm) (Just s) (zip argTys argTys')
+      = foldl' (funSubst tcm) (Just s) (zip argTys argTys')
     go _ _ = Nothing
 
 {- [Note: lazy type families]

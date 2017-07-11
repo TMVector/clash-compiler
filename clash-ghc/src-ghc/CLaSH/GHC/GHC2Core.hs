@@ -36,6 +36,7 @@ import           Data.Hashable               (Hashable (..))
 import           Data.HashMap.Lazy           (HashMap)
 import qualified Data.HashMap.Lazy           as HashMap
 import qualified Data.HashMap.Strict         as HSM
+import           Data.List                   (foldl')
 import           Data.Maybe                  (catMaybes,fromMaybe,listToMaybe)
 import           Data.Text                   (isInfixOf,pack)
 import qualified Data.Traversable            as T
@@ -441,12 +442,12 @@ coreToType' :: Type
             -> State GHC2CoreState C.Type
 coreToType' (TyVarTy tv) = C.VarTy <$> coreToType (varType tv) <*> (coreToVar tv)
 coreToType' (TyConApp tc args)
-  | isFunTyCon tc = foldl C.AppTy (C.ConstTy C.Arrow) <$> mapM coreToType args
+  | isFunTyCon tc = foldl' C.AppTy (C.ConstTy C.Arrow) <$> mapM coreToType args
   | otherwise     = case expandSynTyCon_maybe tc args of
                       Just (substs,synTy,remArgs) -> do
                         let substs' = mkTvSubstPrs substs
                             synTy'  = substTy substs' synTy
-                        foldl C.AppTy <$> coreToType synTy' <*> mapM coreToType remArgs
+                        foldl' C.AppTy <$> coreToType synTy' <*> mapM coreToType remArgs
                       _ -> do
                         tcName <- coreToName tyConName tyConUnique qualfiedNameString tc
                         tyConMap %= (HSM.insert tcName tc)
