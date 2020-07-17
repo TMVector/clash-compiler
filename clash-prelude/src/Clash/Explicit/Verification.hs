@@ -40,6 +40,7 @@ module Clash.Explicit.Verification
   -- * Asserts
   , assert
   , cover
+  , assume
 
   -- * Assertion checking
   , check
@@ -213,6 +214,11 @@ assert = Property . CvAssert . assertion . toAssertionValue
 cover :: AssertionValue dom a => a -> Property dom
 cover = Property . CvCover . assertion . toAssertionValue
 {-# INLINE cover #-}
+
+-- | Assert a precondition.
+assume :: AssertionValue dom a => a -> Property dom
+assume = Property . CvAssume . assertion . toAssertionValue
+{-# INLINE assume #-}
 
 -- | Print property as PSL/SVA in HDL. Clash simulation support not yet
 -- implemented.

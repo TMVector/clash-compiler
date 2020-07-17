@@ -6,12 +6,13 @@ Maintainer :  QBayLogic B.V. <devops@qbaylogic.com>
 Verification
 -}
 
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Clash.Verification.PrettyPrinters
   ( pprPslProperty
   , pprSvaProperty
+  , pprSviaProperty
 
   -- * Debugging functions
   , pprProperty
@@ -134,6 +135,7 @@ pprPslProperty hdl propName clkId edge assertion =
     case assertion of
       CvCover e -> ("cover", pprPslAssertion hdl False e)
       CvAssert e -> ("assert", pprPslAssertion hdl False e)
+      CvAssume _ -> error "Unimplemented PSL assume"
 
 pprPslAssertion :: HDL -> Bool -> Assertion' Text -> Text
 pprPslAssertion hdl parens e =
@@ -242,3 +244,58 @@ pprSvaProperty propName clkId edge assertion =
     case assertion of
       CvCover e -> ("cover", pprSvaAssertion False e)
       CvAssert e -> ("assert", pprSvaAssertion False e)
+      CvAssume _ -> error "Unimplemented SVA assume"
+
+
+--------------------------------------------------------------------------------
+-- SystemVerilog Immediate Assertions
+--------------------------------------------------------------------------------
+
+pprSviaAssertion :: Bool -> Assertion' Text -> Text
+pprSviaAssertion parens e =
+  case e of
+    (CvPure p) -> p
+    (CvLit False) -> "false"
+    (CvLit True) -> "true"
+
+    (CvNot e1) ->
+      parensIf parens (symbol' Not <> pprSviaAssertion True e1)
+    (CvAnd e1 e2) -> svaBinOp1 And e1 e2
+    (CvOr e1 e2) -> svaBinOp1 Or e1 e2
+
+    (CvImplies _ _) -> error "CvImplies not supported by SVIA"
+
+    (CvToTemporal _) -> error "CvToTemporal not supported by SVIA"
+
+    (CvNext 0 e1) -> pprSviaAssertion parens e1
+    (CvNext _ _) -> error "CvNext not supported by SVIA"
+
+    (CvBefore _ _) -> error "CvBefore not supported by SVIA"
+
+    (CvTemporalImplies _ _ _) -> error "CvTemporalImplies not supported by SVIA"
+
+    (CvAlways e1) -> pprSviaAssertion parens e1
+    (CvNever _e) -> error "'never' not supported in SVA"
+ where
+  svaBinOp1 = svaBinOp parens
+  symbol' = symbol SystemVerilog
+
+pprSviaProperty
+  :: Text
+  -- ^ Property name
+  -> Text
+  -- ^ Clock name
+  -> ActiveEdge
+  -- ^ Edge property should be sensitive to
+  -> Property' Text
+  -- ^ Assertion / Cover statement
+  -> Text
+pprSviaProperty _propName clkId edge assertion =
+  "always @(" <> svaEdge edge clkId <> ")"
+  <> "  " <> assertionFunction <> "(" <> prop <> ");"
+ where
+  (assertionFunction, prop) =
+    case assertion of
+      CvCover e  -> ("cover", pprSviaAssertion False e)
+      CvAssert e -> ("assert", pprSviaAssertion False e)
+      CvAssume e -> ("assume" , pprSviaAssertion False e)

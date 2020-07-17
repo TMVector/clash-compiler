@@ -42,6 +42,8 @@ data RenderAs
   -- ^ Property Specification Language
   | SVA
   -- ^ SystemVerilog Assertions
+  | SVIA
+  -- ^ SystemVerilog Immediate Assertions
   | AutoRenderAs
   -- ^ Use SVA for SystemVerilog, PSL for others
   deriving (Show, Eq)
@@ -91,6 +93,7 @@ data Assertion' a
 data Property' a
   = CvAssert (Assertion' a)
   | CvCover (Assertion' a)
+  | CvAssume (Assertion' a)
   deriving (Show, Functor, Foldable, Traversable)
 
 data Assertion (dom :: Domain) =

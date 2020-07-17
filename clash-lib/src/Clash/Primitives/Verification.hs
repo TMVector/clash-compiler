@@ -8,6 +8,7 @@ import Data.Either
 
 import qualified Control.Lens                    as Lens
 import           Control.Monad.State             (State)
+import qualified Data.Text.Prettyprint.Doc       as PP
 import           Data.Text.Prettyprint.Doc.Extra (Doc)
 import qualified Data.Text                       as Text
 import           Data.Semigroup.Monad            (getMon)
@@ -109,7 +110,11 @@ checkTF'
   -> State s Doc
 checkTF' decls clkId propName renderAs prop bbCtx = do
   blockName <- Clash.Backend.mkUniqueIdentifier Basic (propName <> "_block")
-  getMon (blockDecl blockName (TickDecl renderedPslProperty : decls))
+  declDoc <- getMon (blockDecl blockName (TickDecl renderedPslProperty : decls))
+  let assertionDoc = case renderAs of
+        SVIA -> PP.column (`PP.nest` PP.pretty renderedPslProperty)
+        _ -> mempty
+  pure $ declDoc <> PP.line <> assertionDoc
 
  where
   hdl = hdlKind (undefined :: s)
@@ -120,8 +125,10 @@ checkTF' decls clkId propName renderAs prop bbCtx = do
       _ -> error $ "Unexpected first argument: " ++ show (head (bbInputs bbCtx))
 
   renderedPslProperty
+    | renderAs == SVIA = svia
     | renderAs == SVA || hdl == SystemVerilog = sva
     | otherwise = psl
    where
+    svia = pprSviaProperty propName clkId edge prop
     sva = pprSvaProperty propName clkId edge prop
     psl = pprPslProperty hdl propName clkId edge prop
