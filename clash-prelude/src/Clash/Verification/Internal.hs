@@ -10,6 +10,7 @@ Verification
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
 
 #if __GLASGOW_HASKELL__ < 806
 {-# LANGUAGE TypeInType #-}
@@ -34,6 +35,7 @@ import           Data.Text                      (Text)
 
 import Clash.Annotations.BitRepresentation
   (ConstrRepr(..), DataReprAnn(..), liftQ)
+import           Clash.Class.HasDomain
 import           Clash.Signal.Internal          (Domain, Signal)
 
 -- | Render target for HDL
@@ -99,6 +101,8 @@ data Property' a
 data Assertion (dom :: Domain) =
   Assertion IsTemporal (Assertion' (Maybe Text, Signal dom Bool))
 
+type instance TryDomain t (Assertion dom) = Found dom
+
 toTemporal :: Assertion dom -> Assertion' (Maybe Text, Signal dom Bool)
 toTemporal (Assertion IsTemporal a) = a
 toTemporal (Assertion IsNotTemporal a) = CvToTemporal a
@@ -117,6 +121,8 @@ assertion (Assertion _it assert) = assert
 -- 'Clash.Explicit.Verification.assert' and 'Clash.Explicit.Verification.cover'.
 newtype Property (dom :: Domain) =
   Property (Property' (Maybe Text, Signal dom Bool))
+
+type instance TryDomain t (Property dom) = Found dom
 
 -- | A result of some property. Besides carrying the actual boolean result, it
 -- carries some properties used to make reports.
